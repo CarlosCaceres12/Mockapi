@@ -1,4 +1,4 @@
-const API_URL = "https://69383fd24618a71d77cf88f0.mockapi.io/tasks";
+const API_URL = "https://69384d424618a71d77cfc766.mockapi.io/tasks";
 
 const taskInput = document.getElementById("taskInput");
 const addBtn = document.getElementById("addBtn");
