@@ -15,13 +15,29 @@ const deleteSelectedBtn = document.getElementById("deleteSelected");
 
 let allTasks = [];
 
-// Canvas de fondo espacial
+// ============================
+// CANVAS DE FONDO ESPACIAL
+// ============================
 const canvas = document.getElementById("spaceCanvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+let stars = [];
+let rockets = [];
 let particlesArray = [];
+
+// Crear estrellas
+for(let i=0;i<150;i++){
+    stars.push({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*2+1,
+        speed: Math.random()*0.5+0.2
+    });
+}
+
+// Partículas
 class Particle {
     constructor(x, y){
         this.x = x;
@@ -35,20 +51,61 @@ class Particle {
     update(){ this.x+=this.speedX; this.y+=this.speedY; this.life--; }
     draw(){ ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); }
 }
-function animateParticles(){
+
+// Cohetes
+class Rocket {
+    constructor(x, y){
+        this.x = x;
+        this.y = y;
+        this.vy = Math.random()*-4 -3;
+        this.color = `hsl(${Math.random()*360},100%,50%)`;
+        this.size = 6;
+    }
+    update(){ this.y += this.vy; this.vy *= 0.98; this.size *= 0.98; }
+    draw(){
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+        ctx.fill();
+    }
+}
+
+function animate(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Dibujar estrellas
+    stars.forEach(s=>{
+        s.y += s.speed;
+        if(s.y>canvas.height) s.y=0;
+        ctx.fillStyle="#fff";
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fill();
+    });
+
+    // Dibujar partículas
     particlesArray.forEach((p,i)=>{
         p.update();
         p.draw();
         if(p.life<=0) particlesArray.splice(i,1);
     });
-    requestAnimationFrame(animateParticles);
+
+    // Dibujar cohetes
+    rockets.forEach((r,i)=>{
+        r.update();
+        r.draw();
+        if(r.size<0.5) rockets.splice(i,1);
+    });
+
+    requestAnimationFrame(animate);
 }
-animateParticles();
 
-window.addEventListener("resize",()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+animate();
+window.addEventListener("resize",()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
 
-// Cargar tareas
+// ============================
+// FUNCIONES DE TAREAS
+// ============================
 async function loadTasks(){
     const res = await fetch(API_URL);
     allTasks = await res.json();
@@ -61,13 +118,16 @@ function renderTasks(tasks){
     tasks.forEach(addTaskToDOM);
 }
 
-// Agregar tarea
 addBtn.addEventListener("click", async ()=>{
     const title = taskInput.value.trim();
     if(!title){ error.textContent="Write something first!"; return; }
     error.textContent="";
     const newTask = { title, completed:false };
-    const res = await fetch(API_URL,{method:"POST",body:JSON.stringify(newTask),headers:{"Content-Type":"application/json"}});
+    const res = await fetch(API_URL,{
+        method:"POST",
+        body: JSON.stringify(newTask),
+        headers: {"Content-Type":"application/json"}
+    });
     const savedTask = await res.json();
     allTasks.push(savedTask);
     addTaskToDOM(savedTask);
@@ -102,6 +162,7 @@ async function toggleTask(task, li){
         titleEl.style.textDecoration="line-through";
         sound.currentTime = 0; sound.play();
         explodeParticles(li);
+        launchRocket(li);
     }else{
         check.textContent = "○";
         check.classList.remove("completed");
@@ -138,17 +199,17 @@ function editTask(task, li){
     input.addEventListener("blur",()=>{ li.replaceChild(titleEl,input); });
 }
 
-// Filtros
+// FILTROS
 showAllBtn.addEventListener("click",()=>renderTasks(allTasks));
 showPendingBtn.addEventListener("click",()=>renderTasks(allTasks.filter(t=>!t.completed)));
 showCompletedBtn.addEventListener("click",()=>renderTasks(allTasks.filter(t=>t.completed)));
 
-// Seleccionar todas
+// SELECT ALL
 selectAllCheckbox.addEventListener("change",()=>{
     document.querySelectorAll(".select-task").forEach(cb=>cb.checked=selectAllCheckbox.checked);
 });
 
-// Borrar seleccionadas
+// DELETE SELECTED
 deleteSelectedBtn.addEventListener("click", async ()=>{
     const selected = Array.from(document.querySelectorAll(".select-task:checked"));
     for(const cb of selected){
@@ -159,10 +220,16 @@ deleteSelectedBtn.addEventListener("click", async ()=>{
     selectAllCheckbox.checked = false;
 });
 
-// Explosión de partículas
+// PARTICULAS Y COHETES
 function explodeParticles(li){
     const rect = li.getBoundingClientRect();
     for(let i=0;i<15;i++){
         particlesArray.push(new Particle(rect.left+rect.width/2, rect.top+rect.height/2));
     }
 }
+
+function launchRocket(li){
+    const rect = li.getBoundingClientRect();
+    rockets.push(new Rocket(rect.left + rect.width/2, rect.top));
+}
+
