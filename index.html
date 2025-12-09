@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galaxy To-Do App 🚀</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Sonido al completar -->
+    <audio id="taskSound" 
+           src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_e65e6a85e2.mp3?filename=pop-94319.mp3">
+    </audio>
+
+    <div class="app-container">
+        <h1 class="title">Tarea🚀.</h1>
+
+        <div class="input-area">
+            <input id="taskInput" type="text" placeholder="Add a task...">
+            <button id="addBtn">I Got This!</button>
+        </div>
+
+        <p id="error" class="error"></p>
+
+        <ul id="taskList" class="task-list"></ul>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
